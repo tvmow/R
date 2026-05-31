@@ -4,10 +4,10 @@ import json
 import os
 
 # 1. Insert your Telegram Bot Token here (From @BotFather)
-BOT_TOKEN = "7885551891:AAFpZlQrjW11n8MYRuLduTuMx9p_41-tRlQ"
+BOT_TOKEN = "8061475536:AAFRbELE2GTbr2P9UgWZtDMCRPLebWWf6a8"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# 2. Server configurations extracted from HttpCanary
+# 2. Stable Server configuration
 API_URL = "https://xd-ps-api-txt.vercel.app/xdimpor_deceypt"
 HEADERS = {
     "accept": "application/json",
@@ -16,20 +16,24 @@ HEADERS = {
     "accept-encoding": "gzip"
 }
 
-# Links for branding and support
+# Branding and support links
 CHANNEL_URL = "https://t.me/+rZqVYMSTLPkxNmY0"
 DEVELOPER_USERNAME = "@isFortan"
 
+# List of ALL supported file extensions from the images
+SUPPORTED_EXTENSIONS = ['.hc', '.hat', '.ziv', '.arm', '.slipnet', '.mludp', '.zoba', '.wyr', '.nm', '.apnalite', '.int', '.tik', '.v2', '.msy']
+
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
+    extensions_str = ", ".join([f"`{ext}`" for ext in SUPPORTED_EXTENSIONS])
     welcome_text = (
-        "🎯 **Welcome to .hc File Decrypter Bot!**\n\n"
-        "📁 Just send me any `.hc` configuration file, and I will instantly extract the decrypted data for you.\n\n"
+        "🎯 **Welcome to Ultimate Multi-Tunnel File Decrypter Bot!**\n\n"
+        f"📁 Send me any configuration file with these extensions:\n{extensions_str}\n\n"
+        "I will instantly extract the decrypted data for you.\n\n"
         f"📢 **Join our Channel:** [Click Here]({CHANNEL_URL})\n"
         f"👨‍💻 **Developer:** {DEVELOPER_USERNAME}"
     )
     
-    # Adding interactive buttons under the welcome message
     markup = telebot.types.InlineKeyboardMarkup()
     btn_channel = telebot.types.InlineKeyboardButton(text="📢 Join Channel", url=CHANNEL_URL)
     btn_dev = telebot.types.InlineKeyboardButton(text="👨‍💻 Contact Dev", url=f"https://t.me/{DEVELOPER_USERNAME.replace('@', '')}")
@@ -37,66 +41,66 @@ def send_welcome(message):
     
     bot.reply_to(message, welcome_text, parse_mode='Markdown', reply_markup=markup, disable_web_page_preview=True)
 
-# Document handler to receive and process files
+# Document handler to process all incoming files from the images
 @bot.message_handler(content_types=['document'])
-def handle_hc_file(message):
+def handle_tunnel_file(message):
     file_name = message.document.file_name
     
-    # Check if the file has the correct extension (.hc)
-    if not file_name.lower().endswith('.hc'):
-        bot.reply_to(message, "⚠️ **Error:** Please send a valid file ending with `.hc` extension.")
+    # Extract the extension of the uploaded file
+    _, file_extension = os.path.splitext(file_name.lower())
+    
+    # Check if the extension is in our comprehensive list
+    if file_extension not in SUPPORTED_EXTENSIONS:
+        bot.reply_to(message, f"⚠️ **Error:** Unsupported file format. Please send files with: {', '.join(SUPPORTED_EXTENSIONS)}")
         return
 
     try:
-        # Notify the user that processing has started
-        status_msg = bot.reply_to(message, "⏳ *Downloading the file and reading encrypted payload...*", parse_mode='Markdown')
+        status_msg = bot.reply_to(message, f"⏳ *Downloading {file_extension} file and extracting payload...*", parse_mode='Markdown')
 
-        # 1. Download file from Telegram servers
+        # 1. Download file from Telegram
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         
-        # 2. Decode file content into string text
+        # 2. Decode the file content text
         try:
-            hc_content = downloaded_file.decode('utf-8').strip()
+            encrypted_content = downloaded_file.decode('utf-8').strip()
         except UnicodeDecodeError:
-            bot.edit_message_text("❌ **Error:** Failed to read file content as plain text. Ensure the file is not corrupted.", message.chat.id, status_msg.message_id)
+            bot.edit_message_text("❌ **Error:** Failed to read file as text. Ensure it is not corrupted.", message.chat.id, status_msg.message_id)
             return
 
-        bot.edit_message_text("🔄 *Sending payload data to the decryption server...*", message.chat.id, status_msg.message_id, parse_mode='Markdown')
+        bot.edit_message_text(f"🔄 *Sending {file_extension} payload to Stable Decryption Server...*", message.chat.id, status_msg.message_id, parse_mode='Markdown')
 
-        # 3. Construct the payload matching request_body.json exactly
+        # 3. Constructing the Dynamic Payload matching the stable server
         payload = {
-            "file_type": ".hc",
+            "file_type": file_extension, # Dynamically injects (.hc, .hat, .wyr, etc.)
             "source": "text",
-            "content": hc_content  # Dynamic file content sent by the user
+            "content": encrypted_content
         }
 
-        # 4. Sending the POST request to Vercel API
+        # 4. Requesting the stable API URL
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=20)
         
         if response.status_code == 200:
             response_data = response.json()
             
-            # 5. Extract decrypted data from response
+            # 5. Extraction logic
             if "decrypted" in response_data:
                 decrypted_result = response_data["decrypted"]
                 
-                # Format the success output text
                 success_message = (
-                    "🎯 **File Decrypted Successfully!**\n\n"
+                    f"🎯 **{file_extension.upper()[1:]} File Decrypted Successfully!**\n\n"
                     f"```json\n{decrypted_result}\n```\n"
                     f"📢 **Channel:** [Join Here]({CHANNEL_URL})\n"
                     f"👨‍💻 **Developer:** {DEVELOPER_USERNAME}"
                 )
                 
-                # Create buttons for the decrypted message results
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.add(
                     telebot.types.InlineKeyboardButton(text="📢 Channel", url=CHANNEL_URL),
                     telebot.types.InlineKeyboardButton(text="👨‍💻 Developer", url=f"https://t.me/{DEVELOPER_USERNAME.replace('@', '')}")
                 )
                 
-                # Handling Telegram's 4096 character limit per message
+                # Check for Telegram length limit (4096 chars)
                 if len(success_message) > 4000:
                     output_filename = f"decrypted_{file_name}.txt"
                     with open(output_filename, "w", encoding="utf-8") as f:
@@ -106,22 +110,22 @@ def handle_hc_file(message):
                         bot.send_document(
                             message.chat.id, 
                             f, 
-                            caption=f"🎯 **Result is too long! Decrypted data saved into a text file.**\n\n📢 {CHANNEL_URL}\n👨‍💻 Dev: {DEVELOPER_USERNAME}",
+                            caption=f"🎯 **Result is too long! Decrypted data saved as text file.**\n\n📢 {CHANNEL_URL}\n👨‍💻 Dev: {DEVELOPER_USERNAME}",
                             reply_markup=markup
                         )
                     
                     bot.delete_message(message.chat.id, status_msg.message_id)
-                    os.remove(output_filename)  # Delete the temporary file
+                    os.remove(output_filename)
                 else:
                     bot.edit_message_text(success_message, message.chat.id, status_msg.message_id, parse_mode='Markdown', reply_markup=markup, disable_web_page_preview=True)
             else:
-                bot.edit_message_text("⚠️ **Server Error:** Server responded but the `decrypted` data field was missing.", message.chat.id, status_msg.message_id)
+                bot.edit_message_text("⚠️ **Server Error:** The `decrypted` block was missing from the response.", message.chat.id, status_msg.message_id)
         else:
-            bot.edit_message_text(f"❌ **Connection Failed:** Server returned status code: {response.status_code}", message.chat.id, status_msg.message_id)
+            bot.edit_message_text(f"❌ **Connection Failed:** Server responded with code: {response.status_code}", message.chat.id, status_msg.message_id)
 
     except Exception as e:
         bot.reply_to(message, f"❌ **An unexpected error occurred:** {str(e)}")
 
-# Keep the bot running continuously
-print("[*] The Telegram Bot is now running perfectly... Send a .hc file to test!")
+# Infinite polling loop
+print("[*] Ultimate Multi-Extension Bot is live and secure! Ready for all formats...")
 bot.infinity_polling()
